@@ -1,4 +1,5 @@
 import Footer from "./components/footer";
+import FeaturedShowcase from "./components/featured-showcase";
 import Navbar from "./components/navbar";
 
 export default function Home() {
@@ -157,6 +158,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <FeaturedShowcase />
 
       <Footer />
     </main>

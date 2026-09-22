@@ -53,7 +53,7 @@ export default function FeaturedShowcase() {
   const event = events[activeEvent];
 
   return (
-    <section id="featured" className="border-y border-[#e5e0dc] bg-[#f3f3f1] px-3 py-16 sm:px-5 lg:px-8 lg:py-24">
+    <section id="featured" className="border-b border-[#e5e0dc] bg-[#f3f3f1] px-3 py-16 sm:px-5 lg:px-8 lg:py-24">
       <div className="mx-auto max-w-[1500px]">
         <div className="flex flex-col items-center gap-5 text-center">
           <div className="mx-auto max-w-[680px] text-center">

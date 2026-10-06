@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -8,6 +11,35 @@ const navLinks = [
 ];
 
 export default function Navbar() {
+  const [isPoster, setIsPoster] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const syncRole = () => setIsPoster(localStorage.getItem("eventis-role") === "poster");
+    const savedTheme = localStorage.getItem("eventis-theme");
+    const theme = savedTheme === "dark" || savedTheme === "light"
+      ? savedTheme
+      : window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+
+    syncRole();
+    document.documentElement.dataset.theme = theme;
+    setIsDark(theme === "dark");
+    window.addEventListener("eventis-role-change", syncRole);
+    window.addEventListener("storage", syncRole);
+    return () => {
+      window.removeEventListener("eventis-role-change", syncRole);
+      window.removeEventListener("storage", syncRole);
+    };
+  }, []);
+
+  function toggleTheme() {
+    const theme = isDark ? "light" : "dark";
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("eventis-theme", theme);
+    setIsDark(theme === "dark");
+  }
+
   return (
     <header className="sticky top-0 z-50 border-b border-[#e7e1dc] bg-[#f7f5f3]/90 backdrop-blur-sm">
       <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
@@ -19,7 +51,7 @@ export default function Navbar() {
 
         <nav className="hidden items-center justify-center md:flex">
           <div className="flex items-center gap-2 rounded-full border border-[#e8e1dc] bg-[#f8f5f3]/80 px-3 py-2 shadow-[0_8px_18px_rgba(17,17,17,0.03)] backdrop-blur-sm">
-            {navLinks.map((link) => (
+            {[...navLinks, ...(isPoster ? [{ label: "Event Post", href: "/events/create" }] : [])].map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
@@ -32,6 +64,25 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={`Switch to ${isDark ? "light" : "dark"} theme`}
+            title={`Switch to ${isDark ? "light" : "dark"} theme`}
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#d5d0cc] bg-white text-[#292929] shadow-sm transition hover:bg-[#f1eeeb]"
+          >
+            {isDark ? (
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z" />
+              </svg>
+            )}
+          </button>
+
           <div className="hidden items-center gap-2 rounded-full border border-[#e2ddd9] bg-white/80 p-1.5 shadow-[0_8px_20px_rgba(17,17,17,0.04)] sm:flex">
             <Link
               href="/users/auth/login"
@@ -63,11 +114,22 @@ export default function Navbar() {
             <span>Get App</span>
           </Link>
 
-          <button className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#d5d0cc] bg-white text-lg text-[#1d1d1d] shadow-sm md:hidden">
+          <button type="button" onClick={() => setIsMenuOpen((open) => !open)} aria-expanded={isMenuOpen} aria-label={isMenuOpen ? "Close menu" : "Open menu"} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#d5d0cc] bg-white text-lg text-[#1d1d1d] shadow-sm md:hidden">
             ☰
           </button>
         </div>
       </div>
+      {isMenuOpen && (
+        <nav aria-label="Mobile navigation" className="border-t border-[#e7e1dc] bg-[#f7f5f3] px-4 py-3 md:hidden">
+          <div className="mx-auto flex max-w-[1500px] flex-col">
+            {[...navLinks, ...(isPoster ? [{ label: "Event Post", href: "/events/create" }] : [])].map((link) => (
+              <Link key={link.label} href={link.href} onClick={() => setIsMenuOpen(false)} className="border-b border-[#e7e1dc] py-3 text-sm font-bold text-[#3e3e3e] last:border-b-0">
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </nav>
+      )}
     </header>
   );
 }

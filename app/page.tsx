@@ -1,6 +1,8 @@
 import Footer from "./components/footer";
 import FeaturedShowcase from "./components/featured-showcase";
+import FaqSection from "./components/faq-section";
 import Navbar from "./components/navbar";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -32,9 +34,9 @@ export default function Home() {
                   <span className="text-xl text-[#4b4b4b]">⌕</span>
                   <span className="truncate text-base sm:text-lg">Try “Sip and paint events”</span>
                 </div>
-                <button className="ml-2 rounded-[16px] bg-white px-5 py-4 text-sm font-bold uppercase tracking-[0.04em] text-[#1b1b1b] shadow-[0_8px_18px_rgba(17,17,17,0.08)] transition hover:opacity-95 sm:px-8">
+                <Link href="/events" className="ml-2 rounded-[16px] bg-white px-5 py-4 text-sm font-bold uppercase tracking-[0.04em] text-[#1b1b1b] shadow-[0_8px_18px_rgba(17,17,17,0.08)] transition hover:opacity-95 sm:px-8">
                   Find your next event
-                </button>
+                </Link>
               </div>
             </div>
 
@@ -160,6 +162,7 @@ export default function Home() {
       </section>
 
       <FeaturedShowcase />
+      <FaqSection />
 
       <Footer />
     </main>

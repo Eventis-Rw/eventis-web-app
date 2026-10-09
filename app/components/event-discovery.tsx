@@ -36,6 +36,21 @@ const venues = [
   { name: "Nyandungu Eco Park", activity: "1 Event", image: "/eve4.jpg" },
 ];
 
+const posterSlides = [
+  ...sampleEvents.slice(0, 4).map((event) => ({
+    id: event.id,
+    title: event.title,
+    subtitle: `${event.category} · ${formatDate(event.startDate)}`,
+    location: event.location,
+    image: event.coverImage,
+    href: `/events/${event.id}`,
+  })),
+  { id: "music-in-space", title: "Music in Space Rwanda Kigali World Tour", subtitle: "Live music · August 23, 2025", location: "Camp Kigali", image: "/event-poster-1.jpg", href: "/events" },
+  { id: "africas-business-heroes", title: "Africa's Business Heroes Summit & Grand-Finale", subtitle: "Innovation · November 23–24, 2023", location: "Kigali Convention Centre", image: "/event-poster-2.jpg", href: "/events" },
+  { id: "iteka-cultural-festival", title: "Iteka African Cultural Festival Grand Finale", subtitle: "Music · Dance · Fashion · Culture", location: "Mundi Center", image: "/event-poster-3.jpg", href: "/events" },
+  { id: "umoja-fest", title: "Umoja Fest Kwanzaa Celebration", subtitle: "Drum circle · Storytelling · Open mic", location: "Kigali", image: "/event-poster-4.jpg", href: "/events" },
+];
+
 function formatDate(date: string) {
   return new Intl.DateTimeFormat("en", {
     month: "short",
@@ -141,12 +156,12 @@ export default function EventDiscovery({ showEventGrid = true }: { showEventGrid
   }, [feedback]);
 
   useEffect(() => {
-    if (isSpotlightPaused || events.length < 2) return;
-    const timer = window.setInterval(() => {
-      setSpotlightIndex((index) => (index + 1) % Math.min(events.length, 4));
-    }, 6000);
-    return () => window.clearInterval(timer);
-  }, [events.length, isSpotlightPaused]);
+    if (isSpotlightPaused || posterSlides.length < 2) return;
+    const timer = window.setTimeout(() => {
+      setSpotlightIndex((index) => (index + 1) % posterSlides.length);
+    }, 5000);
+    return () => window.clearTimeout(timer);
+  }, [isSpotlightPaused, spotlightIndex]);
 
   const locations = useMemo(
     () => [...new Set(events.map((event) => event.location).filter(Boolean))].sort(),
@@ -233,31 +248,37 @@ export default function EventDiscovery({ showEventGrid = true }: { showEventGrid
 
   const firstPage = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
   const pageNumbers = Array.from({ length: Math.min(5, totalPages) }, (_, index) => firstPage + index);
-  const spotlightEvents = events.slice(0, 4);
-  const spotlight = spotlightEvents[spotlightIndex % Math.max(1, spotlightEvents.length)] ?? sampleEvents[0];
+  const spotlight = posterSlides[spotlightIndex % posterSlides.length];
 
   return (
     <section id="discover-events" className="event-discovery-section">
       <div className="event-discovery-container">
         <div className="event-discovery-showcase">
           <article className="event-spotlight-card">
-            <Image src={spotlight.coverImage} alt={spotlight.title} fill priority unoptimized className="event-spotlight-image" />
+            <Image src={spotlight.image} alt="" fill unoptimized aria-hidden="true" className="event-spotlight-backdrop" />
+            <Image src={spotlight.image} alt={spotlight.title} fill unoptimized className="event-spotlight-image" />
             <div className="event-spotlight-shade" />
             <div className="event-spotlight-topline">
-              <span>HAPPENING IN KIGALI</span>
-              <button type="button" onClick={() => setIsSpotlightPaused((paused) => !paused)} aria-label={isSpotlightPaused ? "Resume featured events" : "Pause featured events"}>
-                {isSpotlightPaused ? "Play" : "Pause"}
-              </button>
+              <span>FEATURED EVENT POSTERS</span>
+              <div className="event-spotlight-controls">
+                <button type="button" onClick={() => setSpotlightIndex((index) => (index - 1 + posterSlides.length) % posterSlides.length)} aria-label="Previous poster">←</button>
+                <button type="button" onClick={() => setIsSpotlightPaused((paused) => !paused)} aria-label={isSpotlightPaused ? "Resume poster slideshow" : "Pause poster slideshow"}>
+                  {isSpotlightPaused ? "Play" : "Pause"}
+                </button>
+                <button type="button" onClick={() => setSpotlightIndex((index) => (index + 1) % posterSlides.length)} aria-label="Next poster">→</button>
+              </div>
             </div>
             <div className="event-spotlight-copy" aria-live="polite">
-              <p>{spotlight.category} · {formatDate(spotlight.startDate)}</p>
+              <p>{spotlight.subtitle}</p>
               <h2>{spotlight.title}</h2>
               <span>{spotlight.location}</span>
-              <Link href={`/events/${spotlight.id}`}>View event</Link>
+              <Link href={spotlight.href}>View event</Link>
             </div>
-            <div className="event-spotlight-dots" aria-label="Featured events">
-              {spotlightEvents.map((event, index) => (
-                <button key={event.id} type="button" aria-label={`Show ${event.title}`} aria-current={index === spotlightIndex} className={index === spotlightIndex ? "is-current" : ""} onClick={() => setSpotlightIndex(index)} />
+            <div className="sr-only" aria-live="polite">{spotlight.title}</div>
+            <div className="event-spotlight-dots" aria-label="Poster pagination">
+              <span>{spotlightIndex + 1} / {posterSlides.length}</span>
+              {posterSlides.map((slide, index) => (
+                <button key={slide.id} type="button" aria-label={`Show poster ${index + 1}: ${slide.title}`} aria-current={index === spotlightIndex} className={index === spotlightIndex ? "is-current" : ""} onClick={() => setSpotlightIndex(index)} />
               ))}
             </div>
           </article>

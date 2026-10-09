@@ -472,24 +472,32 @@ html[data-theme="dark"] .event-search-field input {
   background: #090a17;
 }
 
-.event-spotlight-image {
+.event-spotlight-backdrop {
+  z-index: 0;
   object-fit: cover;
-  object-position: center 35%;
-  transition: transform 600ms ease, opacity 300ms ease;
+  filter: blur(18px) brightness(0.38);
+  transform: scale(1.06);
+  pointer-events: none;
 }
 
-.event-spotlight-card:hover .event-spotlight-image {
-  transform: scale(1.025);
+.event-spotlight-image {
+  z-index: 1;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
 }
 
 .event-spotlight-shade {
   position: absolute;
+  z-index: 2;
   inset: 0;
-  background: linear-gradient(180deg, rgba(4, 5, 16, 0.15) 18%, rgba(4, 5, 16, 0.28) 43%, rgba(4, 5, 16, 0.9) 100%);
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(4, 5, 16, 0.24) 8%, transparent 34%, rgba(4, 5, 16, 0.08) 50%, rgba(4, 5, 16, 0.82) 100%);
 }
 
 .event-spotlight-topline {
   position: absolute;
+  z-index: 4;
   top: 1rem;
   right: 1rem;
   left: 1rem;
@@ -503,8 +511,76 @@ html[data-theme="dark"] .event-search-field input {
   letter-spacing: 0.12em;
 }
 
-.event-spotlight-topline button {
-  min-height: 34px;
+.event-spotlight-copy {
+  position: absolute;
+  z-index: 3;
+  right: 1.25rem;
+  bottom: 3.5rem;
+  left: 1.25rem;
+  max-width: min(75%, 700px);
+  pointer-events: none;
+}
+
+.event-spotlight-copy > p {
+  color: #dce4ff;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.event-spotlight-copy h2 {
+  margin-top: 0.45rem;
+  color: #fff;
+  font-size: clamp(1.45rem, 3vw, 2.7rem);
+  font-weight: 850;
+  line-height: 1.04;
+  text-wrap: pretty;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.48);
+}
+
+.event-spotlight-copy > span {
+  display: block;
+  margin-top: 0.45rem;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.85rem;
+}
+
+.event-spotlight-copy a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.9rem;
+  border-radius: 999px;
+  padding: 0 1.2rem;
+  color: #fff;
+  background: #0869b5;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  font-size: 0.84rem;
+  font-weight: 800;
+  pointer-events: auto;
+  text-decoration: none;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.event-spotlight-copy a:hover {
+  transform: translateY(-1px);
+  background: #1382d4;
+}
+
+.event-spotlight-controls {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.event-spotlight-controls button {
+  display: inline-flex;
+  min-width: 38px;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
   border: 1px solid rgba(255, 255, 255, 0.36);
   border-radius: 999px;
   padding: 0 0.75rem;
@@ -516,63 +592,22 @@ html[data-theme="dark"] .event-search-field input {
   backdrop-filter: blur(10px);
 }
 
-.event-spotlight-copy {
-  position: absolute;
-  right: 1.25rem;
-  bottom: 2.7rem;
-  left: 1.25rem;
-  max-width: 680px;
-}
-
-.event-spotlight-copy > p {
-  color: #d6defe;
-  font-size: 0.75rem;
-  font-weight: 750;
-}
-
-.event-spotlight-copy h2 {
-  margin-top: 0.45rem;
-  color: #fff;
-  font-size: clamp(1.55rem, 3vw, 2.7rem);
-  font-weight: 850;
-  line-height: 1.02;
-}
-
-.event-spotlight-copy > span {
-  display: block;
-  margin-top: 0.55rem;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.82rem;
-}
-
-.event-spotlight-copy a {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  margin-top: 0.95rem;
-  border-radius: 999px;
-  padding: 0 1.15rem;
-  color: #fff;
-  background: #0869b5;
-  font-size: 0.82rem;
-  font-weight: 800;
-  text-decoration: none;
-  transition: background-color 160ms ease, transform 160ms ease;
-}
-
-.event-spotlight-copy a:hover {
-  transform: translateY(-1px);
-  background: #1382d4;
-}
-
 .event-spotlight-dots {
   position: absolute;
+  z-index: 4;
   right: 1.25rem;
   bottom: 1.1rem;
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  color: #fff;
+}
+
+.event-spotlight-dots > span {
+  margin-right: 0.25rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.68rem;
+  font-weight: 750;
 }
 
 .event-spotlight-dots button {

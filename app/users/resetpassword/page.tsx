@@ -9,8 +9,8 @@ const categoryItems = [
 
 export default function ResetPasswordPage() {
   return (
-    <main className="min-h-screen bg-[#c7c0f4] px-3 py-4 sm:px-5 lg:px-8">
-      <div className="mx-auto max-w-[1500px] overflow-hidden rounded-[28px] border border-[#16171a] bg-[#101113] shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+    <main className="min-h-screen bg-[#eaf0ff] px-3 py-4 sm:px-5 lg:px-8">
+      <div className="mx-auto max-w-[1500px] overflow-hidden rounded-[28px] border border-[#384d91] bg-[#0d1945] shadow-[0_0_0_1px_rgba(32,62,170,0.12)]">
         <section className="px-5 pb-10 pt-8 sm:px-8 lg:px-12 lg:pb-16 lg:pt-10">
           <div className="grid items-center gap-7 lg:grid-cols-[1.08fr_0.92fr]">
             <div className="pt-4 lg:pt-8">
@@ -19,13 +19,13 @@ export default function ResetPasswordPage() {
                 <span className="mt-2 block">perfect event</span>
                 <span className="relative mt-2 inline-block">
                   for you
-                  <span className="absolute -bottom-2 left-1 h-[10px] w-[105%] -rotate-[12deg] rounded-full bg-[#d88cff] opacity-95 blur-[1px]" />
-                  <span className="absolute -bottom-[9px] left-0 h-[12px] w-[100%] rotate-[8deg] rounded-full border-b-[5px] border-b-[#d88cff] border-l-0 border-r-0 border-t-0" />
+                  <span className="absolute -bottom-2 left-1 h-[10px] w-[105%] -rotate-[12deg] rounded-full bg-[#7892ef] opacity-95 blur-[1px]" />
+                  <span className="absolute -bottom-[9px] left-0 h-[12px] w-[100%] rotate-[8deg] rounded-full border-b-[5px] border-b-[#7892ef] border-l-0 border-r-0 border-t-0" />
                 </span>
               </h1>
 
               <p className="mt-8 max-w-[720px] text-lg leading-8 text-slate-200/80 sm:text-xl">
-                Penta helps you relax from looking for events and lets you focus on
+                EVENTIS helps you relax from looking for events and lets you focus on
                 enjoying your social life. You don&apos;t have to waste time looking for
                 an event, no guesswork — just rest and relax.
               </p>

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const quickLinks = [
@@ -57,8 +58,9 @@ export default function Footer() {
       <div className="mx-auto max-w-[1500px] px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid gap-10 md:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_1.2fr]">
           <div>
-            <Link href="/" className="inline-flex items-center text-left">
-              <span className="text-[1.6rem] font-black tracking-[-0.08em] text-[#1b1b1b] sm:text-[1.8rem]">
+            <Link href="/" className="inline-flex items-center gap-2 text-left">
+              <Image src="/eventis-logo.svg" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
+              <span className="eventis-brand-wordmark text-[1.6rem] sm:text-[1.8rem]">
                 EVENTIS
               </span>
             </Link>

@@ -1,19 +1,24 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const navLinks = [
   { label: "Home", href: "/" },
-  { label: "About Us", href: "/users/about" },
-  { label: "Connect With Eventis", href: "/" },
-  { label: "Contact Us", href: "/#contact" },
+  { label: "Events", href: "/events" },
+  { label: "Categories", href: "/events#event-category" },
+  { label: "Inbox", href: "/inbox" },
+  { label: "Saved", href: "/saved" },
+  { label: "About", href: "/users/about" },
 ];
 
 export default function Navbar() {
+  const pathname = usePathname();
   const [isPoster, setIsPoster] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isDark, setIsDark] = useState(false);
+  const [hash, setHash] = useState("");
 
   useEffect(() => {
     const syncRole = () => setIsPoster(localStorage.getItem("eventis-role") === "poster");
@@ -24,7 +29,6 @@ export default function Navbar() {
 
     syncRole();
     document.documentElement.dataset.theme = theme;
-    setIsDark(theme === "dark");
     window.addEventListener("eventis-role-change", syncRole);
     window.addEventListener("storage", syncRole);
     return () => {
@@ -33,29 +37,47 @@ export default function Navbar() {
     };
   }, []);
 
-  function toggleTheme() {
-    const theme = isDark ? "light" : "dark";
-    document.documentElement.dataset.theme = theme;
-    localStorage.setItem("eventis-theme", theme);
-    setIsDark(theme === "dark");
+  useEffect(() => {
+    const syncHash = () => setHash(window.location.hash);
+    syncHash();
+    window.addEventListener("hashchange", syncHash);
+    setIsMenuOpen(false);
+    return () => window.removeEventListener("hashchange", syncHash);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsMenuOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [isMenuOpen]);
+
+  function isActive(href: string) {
+    if (href === "/") return pathname === "/";
+    if (href === "/events") return pathname === "/events" && hash !== "#event-category";
+    if (href === "/events#event-category") return pathname === "/events" && hash === "#event-category";
+    return pathname === href || pathname.startsWith(`${href}/`);
   }
 
+  const links = [...navLinks, ...(isPoster ? [{ label: "Event Post", href: "/events/create" }] : [])];
+
   return (
-    <header className="sticky top-0 z-50 border-b border-[#e7e1dc] bg-[#f7f5f3]/90 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex shrink-0 items-center">
-          <span className="text-[1.75rem] font-black tracking-[-0.08em] text-[#1b1b1b] sm:text-[2rem]">
-            EVENTIS
-          </span>
+    <header className="eventis-navbar sticky top-0 z-50 w-full">
+      <div className="mx-auto flex min-h-[76px] w-full max-w-[1500px] items-center justify-between gap-3 px-4 py-2 sm:px-6 lg:px-8">
+        <Link href="/" aria-label="Eventis home" className="eventis-logo-lockup shrink-0">
+          <Image src="/eventis-logo.svg" alt="" width={56} height={56} priority className="h-14 w-14 object-contain" />
         </Link>
 
-        <nav className="hidden items-center justify-center md:flex">
-          <div className="flex items-center gap-2 rounded-full border border-[#e8e1dc] bg-[#f8f5f3]/80 px-3 py-2 shadow-[0_8px_18px_rgba(17,17,17,0.03)] backdrop-blur-sm">
-            {[...navLinks, ...(isPoster ? [{ label: "Event Post", href: "/events/create" }] : [])].map((link) => (
+        <nav aria-label="Main navigation" className="hidden items-center justify-center xl:flex">
+          <div className="flex items-center gap-0.5">
+            {links.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
-                className="rounded-full px-4 py-2 text-[0.92rem] font-bold text-[#3e3e3e] transition duration-200 hover:bg-[#f3efed] hover:text-[#111111]"
+                aria-current={isActive(link.href) ? "page" : undefined}
+                className={`eventis-nav-link${isActive(link.href) ? " is-active" : ""}`}
               >
                 {link.label}
               </Link>
@@ -63,70 +85,69 @@ export default function Navbar() {
           </div>
         </nav>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label={`Switch to ${isDark ? "light" : "dark"} theme`}
-            title={`Switch to ${isDark ? "light" : "dark"} theme`}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#d5d0cc] bg-white text-[#292929] shadow-sm transition hover:bg-[#f1eeeb]"
-          >
-            {isDark ? (
-              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="4" />
-                <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
-              </svg>
-            ) : (
-              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z" />
-              </svg>
-            )}
-          </button>
-
-          <div className="hidden items-center gap-2 rounded-full border border-[#e2ddd9] bg-white/80 p-1.5 shadow-[0_8px_20px_rgba(17,17,17,0.04)] sm:flex">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <div className="hidden items-center gap-1.5 xl:flex">
             <Link
               href="/users/auth/login"
-              className="rounded-full px-4 py-2 text-sm font-semibold text-[#1d1d1d] transition hover:bg-[#f5f2ef]"
+              className="eventis-auth-login"
             >
               Login
             </Link>
 
             <Link
               href="/users/auth/register"
-              className="rounded-full bg-[#1b1b1b] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#2d2d2d]"
+              className="eventis-auth-primary inline-flex"
             >
               Sign Up
             </Link>
           </div>
 
           <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-full bg-[#1a1a1a] px-4 py-2.5 text-sm font-bold text-white shadow-[0_12px_24px_rgba(17,17,17,0.18)] transition hover:bg-[#2b2b2b]"
+            href="/users/auth/register"
+            className="eventis-auth-primary inline-flex xl:hidden"
           >
-            <span className="flex items-center gap-2">
-              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-current">
-                <path d="M15.7 12.5c0-2.2 1.8-3.3 1.9-3.4-1-1.5-2.6-1.7-3.2-1.8-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-2.9-.8-1.5 0-2.9.9-3.7 2.1-1.6 2.8-.4 6.9 1.1 9.2.7 1 1.6 2.1 2.7 2.1 1.1 0 1.5-.7 2.9-.7 1.4 0 1.8.7 2.9.7 1.2 0 2-.9 2.7-2 .9-1.3 1.3-2.6 1.3-2.7-.1-.1-2.5-1-2.5-3.2Zm-2.3-6.4c.6-.7 1-1.7.9-2.6-.9.1-2 .6-2.7 1.3-.6.6-1.1 1.6-1 2.5.9.1 2-.5 2.8-1.2Z" />
-              </svg>
-              <svg viewBox="0 0 448 512" aria-hidden="true" className="h-4 w-4 fill-current">
-                <path d="M293.6 234.3L72.9 13 353.7 174.2 293.6 234.3zM15.3 0C2.3 6.8-6.4 19.2-6.4 35.3l0 441.3c0 16.1 8.7 28.5 21.7 35.3L271.9 255.9 15.3 0zM440.5 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM72.9 499L353.7 337.8 293.6 277.7 72.9 499z" />
-              </svg>
-            </span>
-            <span>Get App</span>
+            Sign Up
           </Link>
 
-          <button type="button" onClick={() => setIsMenuOpen((open) => !open)} aria-expanded={isMenuOpen} aria-label={isMenuOpen ? "Close menu" : "Open menu"} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#d5d0cc] bg-white text-lg text-[#1d1d1d] shadow-sm md:hidden">
-            ☰
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen((open) => !open)}
+            aria-expanded={isMenuOpen}
+            aria-controls="eventis-mobile-navigation"
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+            className="eventis-menu-button inline-flex h-10 w-10 shrink-0 items-center justify-center xl:hidden"
+          >
+            {isMenuOpen ? (
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round">
+                <path d="m6 6 12 12M18 6 6 18" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round">
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+            )}
           </button>
         </div>
       </div>
       {isMenuOpen && (
-        <nav aria-label="Mobile navigation" className="border-t border-[#e7e1dc] bg-[#f7f5f3] px-4 py-3 md:hidden">
-          <div className="mx-auto flex max-w-[1500px] flex-col">
-            {[...navLinks, ...(isPoster ? [{ label: "Event Post", href: "/events/create" }] : [])].map((link) => (
-              <Link key={link.label} href={link.href} onClick={() => setIsMenuOpen(false)} className="border-b border-[#e7e1dc] py-3 text-sm font-bold text-[#3e3e3e] last:border-b-0">
+        <nav id="eventis-mobile-navigation" aria-label="Mobile navigation" className="eventis-mobile-panel xl:hidden">
+          <div className="flex flex-col">
+            {links.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                onClick={() => setIsMenuOpen(false)}
+                aria-current={isActive(link.href) ? "page" : undefined}
+                className={`eventis-mobile-link${isActive(link.href) ? " is-active" : ""}`}
+              >
                 {link.label}
               </Link>
             ))}
+            <div className="flex items-center gap-3 pt-3">
+              <Link href="/users/auth/login" onClick={() => setIsMenuOpen(false)} className="eventis-auth-login">
+                Login
+              </Link>
+            </div>
           </div>
         </nav>
       )}

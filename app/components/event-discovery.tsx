@@ -121,14 +121,16 @@ export default function EventDiscovery({ showEventGrid = true }: { showEventGrid
   const featuredScroller = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const stored = readStoredEvents();
-    const storedIds = new Set(stored.map((event) => event.id));
-    setEvents([...stored, ...sampleEvents.filter((event) => !storedIds.has(event.id))]);
-    setSavedIds(readSavedIds());
-    const params = new URLSearchParams(window.location.search);
-    setSearch(params.get("search") ?? "");
-    setCategory(params.get("category") ?? "all");
-    setIsLoading(false);
+    queueMicrotask(() => {
+      const stored = readStoredEvents();
+      const storedIds = new Set(stored.map((event) => event.id));
+      setEvents([...stored, ...sampleEvents.filter((event) => !storedIds.has(event.id))]);
+      setSavedIds(readSavedIds());
+      const params = new URLSearchParams(window.location.search);
+      setSearch(params.get("search") ?? "");
+      setCategory(params.get("category") ?? "all");
+      setIsLoading(false);
+    });
   }, []);
 
   useEffect(() => {

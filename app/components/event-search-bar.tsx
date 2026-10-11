@@ -61,9 +61,11 @@ export default function EventSearchBar() {
   const [isMoreOpen, setIsMoreOpen] = useState(false);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setSearch(params.get("search") ?? "");
-    setActiveCategory(params.get("category") ?? "all");
+    queueMicrotask(() => {
+      const params = new URLSearchParams(window.location.search);
+      setSearch(params.get("search") ?? "");
+      setActiveCategory(params.get("category") ?? "all");
+    });
   }, []);
 
   useEffect(() => {

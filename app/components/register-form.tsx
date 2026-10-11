@@ -1,15 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { saveUserSession, type EventisUser } from "../lib/auth";
 
 type Step = "signup" | "otp" | "success";
 
+function generateUserId(prefix: string) {
+  return `${prefix}_${Date.now().toString(36)}`;
+}
+
 export default function RegisterForm() {
+  const router = useRouter();
   const [step, setStep] = useState<Step>("signup");
   const [fullName, setFullName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
+  const [otp, setOtp] = useState<string[]>(Array(4).fill(""));
 
   const otpCode = useMemo(() => otp.join(""), [otp]);
   const canContinue = fullName.trim().length > 1 && phoneNumber.trim().length >= 10;
@@ -19,15 +26,36 @@ export default function RegisterForm() {
     setStep("otp");
   };
 
+  const executeVerification = (code?: string) => {
+    const finalCode = code || otp.join("");
+    if (finalCode.length !== 4) return;
+    const user: EventisUser = {
+      id: generateUserId("usr"),
+      username: fullName.trim().toLowerCase().replace(/\s+/g, "_") || "eventis_user",
+      fullName: fullName.trim() || "New Member",
+      phone: phoneNumber,
+      email: `${fullName.trim().toLowerCase().replace(/\s+/g, ".")}@eventis.rw`,
+      avatarUrl: "/eve2.jpg",
+      isPhoneVerified: true,
+      isBusinessAccount: false,
+    };
+    saveUserSession(user);
+    setStep("success");
+  };
+
   const handleOtpChange = (index: number, value: string) => {
     const sanitized = value.replace(/\D/g, "").slice(-1);
     const nextOtp = [...otp];
     nextOtp[index] = sanitized;
     setOtp(nextOtp);
 
-    if (sanitized && index < otp.length - 1) {
+    if (sanitized && index < 3) {
       const nextInput = document.getElementById(`otp-${index + 1}`) as HTMLInputElement | null;
       nextInput?.focus();
+    }
+
+    if (nextOtp.join("").length === 4) {
+      executeVerification(nextOtp.join(""));
     }
   };
 
@@ -42,8 +70,7 @@ export default function RegisterForm() {
   };
 
   const handleVerify = () => {
-    if (otpCode.length !== 6) return;
-    setStep("success");
+    executeVerification(otpCode);
   };
 
   return (
@@ -81,8 +108,22 @@ export default function RegisterForm() {
               <input
                 id="phone-number"
                 type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={12}
                 value={phoneNumber}
-                onChange={(event) => setPhoneNumber(event.target.value)}
+                onKeyDown={(e) => {
+                  if (
+                    ["Backspace", "Delete", "Tab", "Escape", "Enter", "ArrowLeft", "ArrowRight"].includes(e.key) ||
+                    (e.ctrlKey || e.metaKey)
+                  ) {
+                    return;
+                  }
+                  if (!/^\d$/.test(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
+                onChange={(event) => setPhoneNumber(event.target.value.replace(/\D/g, ""))}
                 placeholder="Enter your phone number"
                 className="w-full rounded-2xl border border-[#e7e0dc] bg-[#f7f5f4] px-4 py-3.5 text-base text-[#1b1b1b] shadow-[inset_0_1px_2px_rgba(17,17,17,0.02)] outline-none transition focus:border-[#1b1b1b] focus:bg-white focus:ring-2 focus:ring-[#1b1b1b]/10"
               />
@@ -92,15 +133,15 @@ export default function RegisterForm() {
               type="button"
               onClick={handleNext}
               disabled={!canContinue}
-              className="w-full rounded-full bg-[#1b1b1b] px-5 py-3.5 text-base font-bold text-white shadow-[0_15px_30px_rgba(17,17,17,0.15)] transition hover:bg-[#2b2b2b] disabled:cursor-not-allowed disabled:bg-[#bdb5b0] disabled:shadow-none"
+              className="w-full rounded-full bg-[#1b1b1b] px-5 py-3.5 text-base font-bold text-white shadow-[0_15px_30px_rgba(17,17,17,0.15)] transition hover:bg-[#2b2b2b] disabled:cursor-not-allowed disabled:bg-[#bdb5b0] disabled:shadow-none cursor-pointer"
             >
-              Next
+              Continue
             </button>
           </div>
 
           <p className="mt-8 text-center text-sm text-[#5a5755]">
             Already have an account?{" "}
-            <Link href="/users/auth/login" className="font-semibold text-[#1b1b1b] hover:underline">
+            <Link href="/users/auth/login" className="font-semibold text-[#00A3FF] hover:underline">
               Log in
             </Link>
           </p>
@@ -117,7 +158,7 @@ export default function RegisterForm() {
               Enter OTP code
             </h2>
             <p className="mt-3 text-sm leading-6 text-[#5a5755]">
-              We&apos;ve sent a 6-digit verification code to {phoneNumber}.
+              We&apos;ve sent a 4-digit verification code to {phoneNumber}.
             </p>
           </div>
 
@@ -141,20 +182,20 @@ export default function RegisterForm() {
           <button
             type="button"
             onClick={handleVerify}
-            disabled={otpCode.length !== 6}
-            className="mt-8 w-full rounded-full bg-[#1b1b1b] px-5 py-3.5 text-base font-bold text-white shadow-[0_15px_30px_rgba(17,17,17,0.15)] transition hover:bg-[#2b2b2b] disabled:cursor-not-allowed disabled:bg-[#bdb5b0] disabled:shadow-none"
+            disabled={otpCode.length !== 4}
+            className="mt-8 w-full rounded-full bg-[#00A3FF] hover:bg-[#0092E6] px-5 py-3.5 text-base font-bold text-white shadow-lg transition cursor-pointer disabled:cursor-not-allowed disabled:bg-[#bdb5b0] disabled:shadow-none"
           >
             Verify
           </button>
 
           <div className="mt-6 flex items-center justify-between text-sm text-[#5a5755]">
-            <button type="button" className="font-semibold text-[#1b1b1b] hover:underline">
+            <button type="button" className="font-semibold text-[#1b1b1b] hover:underline cursor-pointer">
               Resend code
             </button>
             <button
               type="button"
               onClick={() => setStep("signup")}
-              className="font-semibold text-[#1b1b1b] hover:underline"
+              className="font-semibold text-[#1b1b1b] hover:underline cursor-pointer"
             >
               Edit details
             </button>
@@ -164,7 +205,7 @@ export default function RegisterForm() {
 
       {step === "success" && (
         <div className="w-full max-w-lg rounded-[28px] border border-[#eee7e4] bg-white p-6 text-center shadow-[0_18px_40px_rgba(17,17,17,0.04)] sm:p-8">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#e8f5ec] text-2xl text-[#1f7a42]">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-2xl text-emerald-600 font-bold border border-emerald-200">
             ✓
           </div>
 
@@ -172,16 +213,16 @@ export default function RegisterForm() {
             Account verified
           </h2>
           <p className="mt-3 text-sm leading-6 text-[#5a5755]">
-            Your account has been successfully verified. You can now continue to your EVENTIS
-            profile and start exploring events.
+            Welcome to EVENTIS, <strong className="text-[#1b1b1b]">{fullName}</strong>! Your account has been verified and you are now signed in.
           </p>
 
-          <Link
-            href="/users/auth/login"
-            className="mt-8 inline-flex w-full items-center justify-center rounded-full bg-[#1b1b1b] px-5 py-3.5 text-base font-bold text-white shadow-[0_15px_30px_rgba(17,17,17,0.15)] transition hover:bg-[#2b2b2b]"
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className="mt-8 inline-flex w-full items-center justify-center rounded-full bg-[#00A3FF] hover:bg-[#0092E6] px-5 py-3.5 text-base font-bold text-white shadow-lg transition cursor-pointer"
           >
-            Continue to login
-          </Link>
+            Enter Eventis Feed →
+          </button>
         </div>
       )}
     </div>

@@ -43,8 +43,10 @@ export default function CreateEventForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    setIsPoster(localStorage.getItem("eventis-role") === "poster");
-    setIsReady(true);
+    queueMicrotask(() => {
+      setIsPoster(localStorage.getItem("eventis-role") === "poster");
+      setIsReady(true);
+    });
   }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {

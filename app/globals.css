@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #02021f;
-  --foreground: #f0f3ff;
-  --theme-surface: #02021f;
-  --theme-raised: #111238;
-  --theme-text: #eef2ff;
-  --theme-muted: #b8c5ee;
-  --theme-border: #384d91;
-  --brand-blue: #203eaa;
+  --background: #070814;
+  --foreground: #F4F7FF;
+  --theme-surface: #070814;
+  --theme-raised: rgba(16, 22, 44, 0.72);
+  --theme-text: #F4F7FF;
+  --theme-muted: #A7B0C9;
+  --theme-border: rgba(255, 255, 255, 0.16);
+  --brand-blue: #00A3FF;
 }
 
 @theme inline {
@@ -18,40 +18,9 @@
   --font-mono: var(--font-geist-mono);
 }
 
-html[data-theme="dark"] body {
-  background: var(--theme-surface);
-  color: var(--theme-text);
-  color-scheme: dark;
-}
-
-html[data-theme="light"] {
-  color-scheme: light;
-}
-
-html[data-theme="dark"] :is(main, section, footer):not(.event-search-section) {
-  background-color: var(--theme-surface) !important;
-  color: var(--theme-text);
-}
-
-html[data-theme="dark"] article,
-html[data-theme="dark"] [class*="bg-white"],
-html[data-theme="dark"] [class*="bg-[#f"],
-html[data-theme="dark"] [class*="bg-[#e"] {
-  background-color: var(--theme-raised) !important;
-}
-
-html[data-theme="dark"] [class*="text-[#"] {
-  color: var(--theme-text) !important;
-}
-
-html[data-theme="dark"] [class*="border-[#"] {
-  border-color: var(--theme-border) !important;
-}
-
-html[data-theme="dark"] :is(input, textarea, select) {
-  border-color: var(--theme-border);
-  background-color: var(--theme-raised);
-  color: var(--theme-text);
+html body {
+  background: var(--background);
+  color: var(--foreground);
   color-scheme: dark;
 }
 
@@ -61,58 +30,6 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-html:not([data-theme="dark"]) body {
-  background: #02021f;
-  color: #f0f3ff;
-}
-
-html:not([data-theme="dark"]) :is(main, footer) {
-  background-color: #02021f !important;
-  color: #f0f3ff;
-}
-
-html:not([data-theme="dark"]) main > section:not(.event-search-section) {
-  background-color: transparent !important;
-}
-
-html:not([data-theme="dark"]) article,
-html:not([data-theme="dark"]) main [class*="bg-white"] {
-  border-color: rgba(32, 62, 170, 0.15);
-  background-color: rgba(255, 255, 255, 0.76) !important;
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-}
-
-html:not([data-theme="dark"]) main [class*="bg-[#f"] {
-  background-color: rgba(17, 18, 56, 0.9) !important;
-}
-
-html:not([data-theme="dark"]) main [class*="border-[#"] {
-  border-color: rgba(32, 62, 170, 0.16) !important;
-}
-
-html:not([data-theme="dark"]) :is(a, button):focus-visible {
-  outline-color: #203eaa;
-}
-
-html:not([data-theme="dark"]) :is(a, button)[class*="bg-[#1b1b1b]"],
-html:not([data-theme="dark"]) :is(a, button)[class*="bg-[#1a1a1a]"],
-html:not([data-theme="dark"]) :is(a, button)[class*="bg-[#292929]"] {
-  background-color: #203eaa !important;
-  color: #fff !important;
-}
-
-html:not([data-theme="dark"]) footer :is(p, li, a) {
-  color: #b9c5ed !important;
-}
-
-html:not([data-theme="dark"]) footer h3 {
-  color: #f2f5ff !important;
-}
-
-html:not([data-theme="dark"]) footer a:hover {
-  color: #fff !important;
-}
 
 @keyframes float-phone {
   0%,
@@ -143,11 +60,16 @@ html:not([data-theme="dark"]) footer a:hover {
 }
 
 .eventis-navbar {
-  color: #f0f4ff;
-  border-bottom: 1px solid rgba(157, 180, 255, 0.2);
-  background: #02021f;
-  -webkit-backdrop-filter: blur(18px) saturate(145%);
-  backdrop-filter: blur(18px) saturate(145%);
+  color: #F4F7FF;
+  border-bottom: 1px solid transparent;
+  background: transparent !important;
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+  transition: border-color 200ms ease;
+}
+
+.eventis-navbar.is-scrolled {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
 .eventis-logo-lockup {
@@ -159,15 +81,15 @@ html:not([data-theme="dark"]) footer a:hover {
 
 .eventis-nav-link,
 .eventis-mobile-link {
-  color: #48535b;
+  color: #A7B0C9;
   font-size: 0.875rem;
-  font-weight: 650;
+  font-weight: 600;
   transition: color 160ms ease, background-color 160ms ease;
 }
 
 .eventis-nav-link {
   border-radius: 999px;
-  padding: 0.65rem 0.72rem;
+  padding: 0.65rem 0.85rem;
   white-space: nowrap;
 }
 
@@ -175,83 +97,103 @@ html:not([data-theme="dark"]) footer a:hover {
 .eventis-nav-link.is-active,
 .eventis-mobile-link:hover,
 .eventis-mobile-link.is-active {
-  color: #075e9d;
-  background: rgba(20, 120, 184, 0.09);
+  color: #F4F7FF;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .eventis-navbar .eventis-nav-link {
-  color: #dce6ff;
+  color: #A7B0C9;
 }
 
 .eventis-navbar .eventis-nav-link:hover,
 .eventis-navbar .eventis-nav-link.is-active {
-  color: #fff;
-  background: rgba(114, 148, 246, 0.22);
+  color: #F4F7FF;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .eventis-mobile-panel {
   margin: 0 0.5rem 0.5rem;
   padding: 0.5rem 0.75rem 0.75rem;
-  border: 1px solid rgba(157, 180, 255, 0.2);
-  border-radius: 0 0 13px 13px;
-  color: #edf2ff;
-  background: #02021f;
-  -webkit-backdrop-filter: blur(18px) saturate(145%);
-  backdrop-filter: blur(18px) saturate(145%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0 0 16px 16px;
+  color: #F4F7FF;
+  background: rgba(7, 8, 20, 0.75);
+  -webkit-backdrop-filter: blur(24px) saturate(120%);
+  backdrop-filter: blur(24px) saturate(120%);
 }
 
 .eventis-mobile-link {
   min-height: 46px;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid rgba(48, 65, 78, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   padding: 0 0.75rem;
 }
 
 .eventis-auth-login,
 .eventis-auth-primary {
-  min-height: 42px;
+  min-height: 40px;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
   font-size: 0.875rem;
   font-weight: 700;
-  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease;
+  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
   white-space: nowrap;
 }
 
 .eventis-auth-login {
   display: inline-flex;
-  padding: 0 0.9rem;
-  color: #e9efff;
+  padding: 0 1.1rem;
+  color: #F4F7FF;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
 }
 
 .eventis-auth-login:hover {
-  color: #fff;
-  background: rgba(114, 148, 246, 0.2);
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.20);
 }
 
 .eventis-auth-primary {
-  padding: 0 1rem;
-  color: #fff;
-  background: #3155c7;
-  box-shadow: 0 3px 12px rgba(49, 85, 199, 0.3);
+  padding: 0 1.25rem;
+  color: #FFFFFF;
+  background: #00A3FF;
 }
 
 .eventis-auth-primary:hover {
-  background: #4268dd;
+  background: #0092E6;
+}
+
+.eventis-get-app-btn {
+  color: #00A3FF;
+  background: rgba(0, 163, 255, 0.10);
+  border: 1px solid rgba(0, 163, 255, 0.32);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  transition: all 160ms ease;
+}
+
+.eventis-get-app-btn:hover {
+  color: #FFFFFF;
+  background: #00A3FF;
+  border-color: #00A3FF;
+  box-shadow: 0 4px 16px rgba(0, 163, 255, 0.4);
 }
 
 .eventis-menu-button:hover {
-  background: rgba(20, 120, 184, 0.08);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .eventis-menu-button {
-  border: 1px solid rgba(157, 180, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 999px;
-  color: #f0f4ff;
-  background: rgba(255, 255, 255, 0.1);
+  color: #F4F7FF;
+  background: rgba(255, 255, 255, 0.08);
   transition: background-color 160ms ease, border-color 160ms ease;
 }
 
@@ -1874,41 +1816,7 @@ html[data-theme="dark"] .event-search-field input {
   }
 }
 
-html[data-theme="dark"] .eventis-navbar {
-  color: #f2f4f5;
-  border-color: rgba(173, 192, 255, 0.18);
-  background: #02021f;
-}
 
-html[data-theme="dark"] .eventis-brand-wordmark,
-html[data-theme="dark"] .eventis-auth-login,
-html[data-theme="dark"] .eventis-menu-button {
-  color: #f2f4f5;
-}
-
-html[data-theme="dark"] :is(.eventis-nav-link, .eventis-mobile-link) {
-  color: #d0d5d8;
-}
-
-html[data-theme="dark"] :is(.eventis-nav-link, .eventis-mobile-link):hover,
-html[data-theme="dark"] :is(.eventis-nav-link, .eventis-mobile-link).is-active {
-  color: #9bd4fa;
-  background: rgba(71, 159, 216, 0.16);
-}
-
-html[data-theme="dark"] .eventis-mobile-panel {
-  border-color: rgba(173, 192, 255, 0.18);
-  background: #02021f;
-}
-
-html[data-theme="dark"] .eventis-mobile-link {
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-html[data-theme="dark"] .eventis-menu-button {
-  border-color: rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
-}
 
 @media (prefers-reduced-motion: reduce) {
   .eventis-navbar :is(a, button) {

@@ -26,18 +26,20 @@ export default function EventDetailsPage() {
   const [feedback, setFeedback] = useState("");
 
   useEffect(() => {
-    try {
-      const stored: unknown = JSON.parse(localStorage.getItem(eventStorageKey) ?? "[]");
-      const userEvents = Array.isArray(stored) ? stored as EventPost[] : [];
-      const found = [...userEvents, ...sampleEvents].find((item) => item.id === eventId) ?? null;
-      setEvent(found);
-      const saved: unknown = JSON.parse(localStorage.getItem(savedEventStorageKey) ?? "[]");
-      setIsSaved(Array.isArray(saved) && saved.includes(eventId));
-    } catch {
-      setEvent(sampleEvents.find((item) => item.id === eventId) ?? null);
-    } finally {
-      setIsLoading(false);
-    }
+    queueMicrotask(() => {
+      try {
+        const stored: unknown = JSON.parse(localStorage.getItem(eventStorageKey) ?? "[]");
+        const userEvents = Array.isArray(stored) ? stored as EventPost[] : [];
+        const found = [...userEvents, ...sampleEvents].find((item) => item.id === eventId) ?? null;
+        setEvent(found);
+        const saved: unknown = JSON.parse(localStorage.getItem(savedEventStorageKey) ?? "[]");
+        setIsSaved(Array.isArray(saved) && saved.includes(eventId));
+      } catch {
+        setEvent(sampleEvents.find((item) => item.id === eventId) ?? null);
+      } finally {
+        setIsLoading(false);
+      }
+    });
   }, [eventId]);
 
   function toggleSave() {

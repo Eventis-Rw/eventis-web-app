@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { eventStorageKey, sampleEvents, savedEventStorageKey, type EventPost } from "../lib/events";
 
 const pageSize = 8;
@@ -111,12 +111,14 @@ export default function EventDiscovery({ showEventGrid = true }: { showEventGrid
   const [eventFormat, setEventFormat] = useState("all");
   const [sort, setSort] = useState("recommended");
   const [page, setPage] = useState(1);
+  const [hasMoreFeatured, setHasMoreFeatured] = useState(true);
   const [spotlightIndex, setSpotlightIndex] = useState(0);
   const [isSpotlightPaused, setIsSpotlightPaused] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedInsight, setSelectedInsight] = useState<EventPost | null>(null);
   const [feedback, setFeedback] = useState("");
+  const featuredScroller = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const stored = readStoredEvents();
@@ -162,6 +164,25 @@ export default function EventDiscovery({ showEventGrid = true }: { showEventGrid
     }, 5000);
     return () => window.clearTimeout(timer);
   }, [isSpotlightPaused, spotlightIndex]);
+
+  useEffect(() => {
+    if (showEventGrid) return;
+    const scroller = featuredScroller.current;
+    if (!scroller) return;
+
+    const updateMoreState = () => {
+      setHasMoreFeatured(scroller.scrollLeft + scroller.clientWidth < scroller.scrollWidth - 1);
+    };
+
+    updateMoreState();
+    scroller.addEventListener("scroll", updateMoreState);
+    const resizeObserver = new ResizeObserver(updateMoreState);
+    resizeObserver.observe(scroller);
+    return () => {
+      scroller.removeEventListener("scroll", updateMoreState);
+      resizeObserver.disconnect();
+    };
+  }, [events.length, showEventGrid]);
 
   const locations = useMemo(
     () => [...new Set(events.map((event) => event.location).filter(Boolean))].sort(),
@@ -250,10 +271,69 @@ export default function EventDiscovery({ showEventGrid = true }: { showEventGrid
   const pageNumbers = Array.from({ length: Math.min(5, totalPages) }, (_, index) => firstPage + index);
   const spotlight = posterSlides[spotlightIndex % posterSlides.length];
 
+  function showMoreFeatured() {
+    featuredScroller.current?.scrollBy({ left: featuredScroller.current.clientWidth, behavior: "smooth" });
+  }
+
   return (
     <section id="discover-events" className="event-discovery-section">
       <div className="event-discovery-container">
-        <div className="event-discovery-showcase">
+        {!showEventGrid && (
+          <>
+            <div className="event-stories" aria-label="Event stories">
+              {events.map((event, index) => (
+                <button
+                  key={event.id}
+                  type="button"
+                  className="event-story"
+                  onClick={() => featuredScroller.current?.children[index]?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" })}
+                  aria-label={`Show ${event.title}`}
+                >
+                  <span className="event-story-ring">
+                    <span className="event-story-image">
+                      <Image src={event.coverImage} alt="" fill unoptimized sizes="72px" />
+                    </span>
+                  </span>
+                  <span className="event-story-title">{event.title}</span>
+                </button>
+              ))}
+            </div>
+            <div className="event-featured-heading">
+              <h2>Featured events</h2>
+              <button type="button" onClick={showMoreFeatured} disabled={!hasMoreFeatured}>
+                {hasMoreFeatured ? "View more" : "All events shown"}
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
+              </button>
+            </div>
+          </>
+        )}
+        <div ref={showEventGrid ? undefined : featuredScroller} className={`event-discovery-showcase${showEventGrid ? "" : " event-discovery-featured-grid"}`}>
+          {!showEventGrid && events.map((event) => (
+            <article className="event-feature-card" key={event.id}>
+              <Link href={`/events/${event.id}`} className="event-feature-card-link">
+                <div className="event-feature-poster">
+                  <Image src={event.coverImage} alt={event.title} fill unoptimized sizes="(max-width: 520px) 100vw, (max-width: 900px) 50vw, 33vw" className="event-feature-poster-image" />
+                  <span className="event-feature-date">{formatDate(event.startDate)}</span>
+                </div>
+                <div className="event-feature-details">
+                  <p className="event-feature-location">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></svg>
+                    <span>{event.location}</span>
+                  </p>
+                  <h2>{event.title}</h2>
+                  <div className="event-feature-footer">
+                    <span className="event-feature-category"><span aria-hidden="true">{event.category.slice(0, 1).toUpperCase()}</span>{event.category}</span>
+                    <span className="event-feature-price">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z" /><circle cx="7.5" cy="7.5" r="1" /></svg>
+                      {event.priceType === "free" ? "Free entry" : event.price || "Paid entry"}
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            </article>
+          ))}
+
+          {showEventGrid && <>
           <article className="event-spotlight-card">
             <Image src={spotlight.image} alt="" fill unoptimized aria-hidden="true" className="event-spotlight-backdrop" />
             <Image src={spotlight.image} alt={spotlight.title} fill unoptimized className="event-spotlight-image" />
@@ -298,6 +378,7 @@ export default function EventDiscovery({ showEventGrid = true }: { showEventGrid
               ))}
             </div>
           </aside>
+          </>}
         </div>
 
         {showEventGrid && <div className="event-discovery-heading-row">

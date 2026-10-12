@@ -23,7 +23,7 @@ export default function LoginForm() {
       avatarUrl: "/eve1.jpg",
       isPhoneVerified: true,
       isBusinessAccount: false,
-      bio: "Active member in the Kigali Eventis community.",
+      bio: "Active member in the Rwanda Eventis community.",
     };
     saveUserSession(user);
     router.push("/");

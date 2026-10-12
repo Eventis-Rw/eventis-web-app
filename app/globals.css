@@ -133,40 +133,59 @@ body {
 
 .eventis-auth-login,
 .eventis-auth-primary {
+  display: inline-flex;
   min-height: 40px;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
   font-size: 0.875rem;
   font-weight: 700;
-  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
   white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .eventis-auth-login {
-  display: inline-flex;
-  padding: 0 1.1rem;
+  padding: 0 1.15rem;
   color: #F4F7FF;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
 }
 
 .eventis-auth-login:hover {
   color: #FFFFFF;
-  background: rgba(255, 255, 255, 0.10);
-  border-color: rgba(255, 255, 255, 0.20);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.26);
+  transform: translateY(-1px);
+}
+
+.eventis-auth-login:active {
+  transform: translateY(0) scale(0.98);
 }
 
 .eventis-auth-primary {
-  padding: 0 1.25rem;
+  padding: 0 1.35rem;
   color: #FFFFFF;
-  background: #00A3FF;
+  background: linear-gradient(135deg, #00A3FF 0%, #0066FF 100%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 16px rgba(0, 163, 255, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.30);
+  letter-spacing: -0.01em;
 }
 
 .eventis-auth-primary:hover {
-  background: #0092E6;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #1ab0ff 0%, #0057e6 100%);
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 6px 22px rgba(0, 163, 255, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.40);
+  transform: translateY(-1px);
+}
+
+.eventis-auth-primary:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 8px rgba(0, 163, 255, 0.30);
 }
 
 .eventis-get-app-btn {

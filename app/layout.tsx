@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "EVENTIS | Find Your Next Event",
-  description: "Discover events and memorable experiences around Kigali with EVENTIS.",
+  description: "Discover events and memorable experiences across Rwanda with EVENTIS.",
   icons: { icon: "/eventis-logo.svg" },
 };
 

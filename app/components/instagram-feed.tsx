@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   eventStorageKey,
@@ -209,22 +210,51 @@ export default function InstagramFeed() {
   const [viewedStories, setViewedStories] = useState<Set<string>>(new Set());
 
   // Current user state
+  const router = useRouter();
   const [currentUser, setCurrentUser] = useState<EventisUser | null>(null);
+  const [isPoster, setIsPoster] = useState(false);
+  const [isOrganizerModalOpen, setIsOrganizerModalOpen] = useState(false);
+  const [orgBrandName, setOrgBrandName] = useState("");
+  const [orgCategory, setOrgCategory] = useState("Concerts & Music");
+  const [orgDescription, setOrgDescription] = useState("");
+  const [orgPhone, setOrgPhone] = useState("");
 
   useEffect(() => {
     const syncUser = () => {
       setCurrentUser(getStoredUser());
     };
+    const syncRole = () => {
+      setIsPoster(localStorage.getItem("eventis-role") === "poster");
+    };
     queueMicrotask(() => {
       syncUser();
+      syncRole();
     });
     window.addEventListener(AUTH_CHANGE_EVENT, syncUser);
+    window.addEventListener("eventis-role-change", syncRole);
     window.addEventListener("storage", syncUser);
+    window.addEventListener("storage", syncRole);
     return () => {
       window.removeEventListener(AUTH_CHANGE_EVENT, syncUser);
+      window.removeEventListener("eventis-role-change", syncRole);
       window.removeEventListener("storage", syncUser);
+      window.removeEventListener("storage", syncRole);
     };
   }, []);
+
+  const handleActivateOrganizer = (e: React.FormEvent) => {
+    e.preventDefault();
+    const finalName = orgBrandName.trim() || currentUser?.fullName || "Rwanda Organizer";
+    localStorage.setItem("eventis-role", "poster");
+    localStorage.setItem("eventis-organizer-name", finalName);
+    localStorage.setItem("eventis-organizer-category", orgCategory);
+    setIsPoster(true);
+    window.dispatchEvent(new Event("eventis-role-change"));
+    window.dispatchEvent(new Event("storage"));
+    setIsOrganizerModalOpen(false);
+    showToast("🎉 Organizer profile activated! Welcome, " + finalName);
+    router.push("/events/create");
+  };
 
   // Modals matching mobile app (insightsModal, shareModal, optionsModal)
   const [activeInsightEvent, setActiveInsightEvent] = useState<EventPost | null>(null);
@@ -351,6 +381,11 @@ export default function InstagramFeed() {
 
   // Save Event logic (persisted to savedEventStorageKey without count display, exactly like mobile app EventCard.tsx)
   const toggleSave = (eventId: string) => {
+    if (!currentUser) {
+      showToast("Login required to save events");
+      router.push("/users/auth/login");
+      return;
+    }
     const isSaved = savedIds.includes(eventId);
     const nextSaved = isSaved
       ? savedIds.filter((id) => id !== eventId)
@@ -359,6 +394,15 @@ export default function InstagramFeed() {
     localStorage.setItem(savedEventStorageKey, JSON.stringify(nextSaved));
     window.dispatchEvent(new Event("storage"));
     showToast(isSaved ? "Removed from saved events" : "Event saved to your collection");
+  };
+
+  const handleViewEvent = (eventId: string) => {
+    if (!currentUser) {
+      showToast("Login required to view event details");
+      router.push("/users/auth/login");
+      return;
+    }
+    router.push(`/events/${eventId}`);
   };
 
   const handleShare = (event: EventPost) => {
@@ -397,6 +441,11 @@ export default function InstagramFeed() {
   };
 
   const handleSendToChat = (contactId: string, event: EventPost) => {
+    if (!currentUser) {
+      showToast("Login required to chat");
+      router.push("/users/auth/login");
+      return;
+    }
     if (sentChatIds[contactId]) return;
     setSentChatIds((prev) => ({ ...prev, [contactId]: true }));
     setSharesState((prev) => ({ ...prev, [event.id]: (prev[event.id] || 0) + 1 }));
@@ -404,6 +453,11 @@ export default function InstagramFeed() {
   };
 
   const handleSendToAllChats = (event: EventPost) => {
+    if (!currentUser) {
+      showToast("Login required to send to chats");
+      router.push("/users/auth/login");
+      return;
+    }
     if (sendingAll) return;
     setSendingAll(true);
     const newSent: Record<string, boolean> = {};
@@ -659,6 +713,40 @@ export default function InstagramFeed() {
             </div>
           )}
 
+          {/* Mobile Organizer Banner for Logged-In Users */}
+          {currentUser && (
+            <div className="lg:hidden p-3.5 rounded-2xl border border-[#00A3FF]/30 bg-gradient-to-r from-[#0c1638] via-[#091230] to-[#070b20] flex items-center justify-between gap-3 shadow-lg">
+              <div className="min-w-0">
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#00A3FF]">
+                  {isPoster ? "Organizer Studio" : "Host in Rwanda 🇷🇼"}
+                </span>
+                <p className="text-xs font-bold text-[#F4F7FF] truncate">
+                  {isPoster ? "Ready to publish an event?" : "Become an Event Organizer"}
+                </p>
+              </div>
+              {isPoster ? (
+                <Link
+                  href="/events/create"
+                  className="shrink-0 py-1.5 px-3.5 rounded-xl bg-[#00A3FF] text-white text-xs font-bold shadow transition hover:bg-[#0092E6]"
+                >
+                  + Post Event
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOrgBrandName(currentUser.fullName ? `${currentUser.fullName} Events` : "");
+                    setOrgPhone(currentUser.phone || "");
+                    setIsOrganizerModalOpen(true);
+                  }}
+                  className="shrink-0 py-1.5 px-3.5 rounded-xl bg-[#00A3FF] text-white text-xs font-bold shadow transition hover:bg-[#0092E6] cursor-pointer"
+                >
+                  Get Started
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Category Filter Pills (Mobile App CategoryPill.tsx style: no emoji, clean glass pills) */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
             {categories.map((cat) => {
@@ -760,7 +848,7 @@ export default function InstagramFeed() {
                           )}
                         </div>
                         <p className="text-[12px] font-medium text-[#A7B0C9] truncate">
-                          {event.location}, Kigali
+                          {event.location.includes("Rwanda") ? event.location : `${event.location}, Rwanda`}
                         </p>
                       </div>
                     </div>
@@ -781,8 +869,8 @@ export default function InstagramFeed() {
                   </div>
 
                   {/* Post Media: Full-width square 1:1 image (styles.instaMediaWrap: width 100%, aspectRatio: 1) */}
-                  <Link
-                    href={`/events/${event.id}`}
+                  <div
+                    onClick={() => handleViewEvent(event.id)}
                     className="block relative w-full aspect-square bg-black overflow-hidden select-none cursor-pointer group"
                   >
                     <Image
@@ -793,7 +881,7 @@ export default function InstagramFeed() {
                       sizes="(max-width: 640px) 100vw, 490px"
                       className="object-cover group-hover:scale-[1.01] transition-transform duration-300"
                     />
-                  </Link>
+                  </div>
 
                   {/* Action Bar (EventCard.tsx lines 1230-1260: Share with count, Insights pill, Save without count) */}
                   <div className="px-[14px] py-[8px] flex items-center justify-between">
@@ -813,12 +901,12 @@ export default function InstagramFeed() {
                         <span className="text-[13px] font-semibold text-[#F4F7FF]">{formatCount(shares)}</span>
                       </button>
 
-                      {/* Insights button */}
+                      {/* Insights button with live views number */}
                       <button
                         type="button"
                         onClick={() => setActiveInsightEvent(event)}
-                        className="flex items-center gap-[5px] text-[#00A3FF] hover:text-white px-[9px] py-[3.5px] rounded-full bg-[#00A3FF]/15 hover:bg-[#00A3FF]/25 border border-[#00A3FF]/30 transition cursor-pointer text-[12px] font-semibold backdrop-blur-md"
-                        aria-label="View event insights"
+                        className="flex items-center gap-[6px] text-[#00A3FF] hover:text-white px-[10px] py-[3.5px] rounded-full bg-[#00A3FF]/15 hover:bg-[#00A3FF]/25 border border-[#00A3FF]/30 transition cursor-pointer text-[12px] font-semibold backdrop-blur-md group"
+                        aria-label={`View event insights, ${formatCount(event.viewsCount || 120)} views`}
                       >
                         <svg className="w-[15px] h-[15px] fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
                           <path d="M18 20V10" strokeLinecap="round" strokeLinejoin="round" />
@@ -826,6 +914,9 @@ export default function InstagramFeed() {
                           <path d="M6 20V14" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                         <span>Insights</span>
+                        <span className="text-[11px] font-bold text-[#F4F7FF] bg-[#00A3FF]/25 group-hover:bg-[#00A3FF]/40 px-1.5 py-0.5 rounded-full leading-none transition">
+                          {formatCount(event.viewsCount || 120)}
+                        </span>
                       </button>
                     </div>
 
@@ -850,13 +941,14 @@ export default function InstagramFeed() {
 
                   {/* Post Details & Caption (EventCard.tsx lines 1262-1296: styles.instaDetails) */}
                   <div className="px-[14px] pb-[16px] flex flex-col gap-[6px]">
-                    {/* Title (fontSize: 17, fontFamily: Inter_800ExtraBold, lineHeight: 22, letterSpacing: -0.25) */}
-                    <Link
-                      href={`/events/${event.id}`}
-                      className="text-[17px] font-extrabold leading-[22px] tracking-[-0.25px] text-[#F4F7FF] hover:underline line-clamp-2"
+                    {/* Title */}
+                    <button
+                      type="button"
+                      onClick={() => handleViewEvent(event.id)}
+                      className="text-left text-[17px] font-extrabold leading-[22px] tracking-[-0.25px] text-[#F4F7FF] hover:underline line-clamp-2 cursor-pointer"
                     >
                       {event.title}
-                    </Link>
+                    </button>
 
                     {/* Meta Row: Calendar icon 14px + Date & Time 13px medium (styles.instaMetaRow) */}
                     <div className="flex items-center gap-[6px]">
@@ -894,6 +986,22 @@ export default function InstagramFeed() {
                         {isCaptionExpanded ? "less" : "more"}
                       </button>
                     )}
+
+                    {/* View more button (Glassmorphism without gradients, auth-protected) */}
+                    <div className="relative group/view mt-2.5">
+                      <button
+                        type="button"
+                        onClick={() => handleViewEvent(event.id)}
+                        className="w-full py-2.5 px-4 rounded-xl bg-white/[0.07] hover:bg-white/[0.13] active:bg-white/[0.18] border border-white/[0.14] backdrop-blur-md text-xs font-bold text-[#F4F7FF] transition flex items-center justify-center cursor-pointer shadow-sm select-none"
+                      >
+                        View more
+                      </button>
+                      {!currentUser && (
+                        <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover/view:opacity-100 transition-all duration-200 z-30 px-3 py-1 rounded-lg bg-[#0a1026]/95 border border-white/[0.18] backdrop-blur-md text-[11px] font-bold text-[#00A3FF] shadow-2xl whitespace-nowrap">
+                          Login required
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </article>
               );
@@ -903,38 +1011,159 @@ export default function InstagramFeed() {
 
         {/* Right Sidebar (Desktop Supporting Explorer Column) */}
         <aside className="hidden lg:block w-[300px] shrink-0 sticky top-24 h-fit space-y-6">
-          {/* User Profile Card (Instagram Web Desktop Sidebar Style) */}
-          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[rgba(16,22,44,0.72)] backdrop-blur-xl border border-white/[0.16] shadow-xl">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="relative w-11 h-11 rounded-full overflow-hidden border border-white/[0.18] shrink-0">
-                <Image
-                  src={currentUser?.avatarUrl || "/eve1.jpg"}
-                  alt={currentUser?.fullName || "User Profile"}
-                  fill
-                  unoptimized
-                  sizes="44px"
-                  className="object-cover"
-                />
+          {/* User Profile / Visitor Welcome Card */}
+          <div className="p-4 rounded-2xl bg-[rgba(16,22,44,0.72)] backdrop-blur-xl border border-white/[0.16] shadow-xl">
+            {currentUser ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative w-11 h-11 rounded-full overflow-hidden border border-white/[0.18] shrink-0">
+                    <Image
+                      src={currentUser.avatarUrl || "/eve1.jpg"}
+                      alt={currentUser.fullName}
+                      fill
+                      unoptimized
+                      sizes="44px"
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-[#F4F7FF] truncate">
+                      {currentUser.username}
+                    </p>
+                    <p className="text-xs text-[#A7B0C9] truncate">
+                      {currentUser.fullName}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearUserSession();
+                  }}
+                  className="text-xs font-bold text-[#FF5252] hover:underline cursor-pointer shrink-0 ml-2"
+                >
+                  Log out
+                </button>
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-[#F4F7FF] truncate">
-                  {currentUser?.username || "eventis_explorer"}
+            ) : (
+              <div className="text-left space-y-2.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-[#00A3FF]/15 border border-[#00A3FF]/30 flex items-center justify-center shrink-0">
+                    <svg className="w-4 h-4 text-[#00A3FF]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[#F4F7FF]">Welcome to EVENTIS</p>
+                    <p className="text-[11px] text-[#A7B0C9]">Rwanda&apos;s Live Events Community</p>
+                  </div>
+                </div>
+                <p className="text-xs text-[#A7B0C9] leading-relaxed">
+                  Sign in to save events to your collection, chat with organizers, and get tickets instantly across Rwanda.
                 </p>
-                <p className="text-xs text-[#A7B0C9] truncate">
-                  {currentUser?.fullName || "Kigali Explorer"}
-                </p>
+                <div className="flex items-center gap-2 pt-1">
+                  <Link
+                    href="/users/auth/login"
+                    className="flex-1 py-2 px-3 rounded-full text-center text-xs font-bold bg-white/10 hover:bg-white/15 text-[#F4F7FF] border border-white/20 transition"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/users/auth/register"
+                    className="flex-1 py-2 px-3 rounded-full text-center text-xs font-bold bg-[#00A3FF] hover:bg-[#0092E6] text-white transition shadow-sm"
+                  >
+                    Sign Up
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Become an Organizer Card (Visible when user is logged in) */}
+          {currentUser && (
+            <div className="relative overflow-hidden rounded-2xl border border-[#00A3FF]/28 bg-gradient-to-br from-[#0e1a42] via-[#091230] to-[#060a1e] p-4.5 shadow-[0_16px_36px_rgba(0,163,255,0.14)] backdrop-blur-xl">
+              {/* Decorative radial ambient glow */}
+              <div className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-[#00A3FF]/25 blur-2xl" />
+              <div className="pointer-events-none absolute -left-6 -bottom-6 h-24 w-24 rounded-full bg-[#6930c3]/20 blur-2xl" />
+
+              <div className="relative z-10 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#00A3FF]/40 bg-[#00A3FF]/15 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-[#00A3FF]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#00A3FF] animate-pulse" />
+                    {isPoster ? "Organizer Studio" : "Host with Eventis"}
+                  </span>
+                  <span className="text-[11px] font-bold text-[#A7B0C9]">Rwanda 🇷🇼</span>
+                </div>
+
+                <div>
+                  <h3 className="text-base font-extrabold text-[#F4F7FF] tracking-tight">
+                    {isPoster ? "Manage Your Events" : "Become an Organizer"}
+                  </h3>
+                  <p className="mt-1 text-xs text-[#A7B0C9] leading-relaxed">
+                    {isPoster
+                      ? "Publish new concerts, festivals, or nightlife experiences directly to Rwanda's live feed."
+                      : "Host concerts, festivals, parties, or workshops. Reach thousands of event-goers across Rwanda and sell tickets effortlessly."}
+                  </p>
+                </div>
+
+                {/* Organizer feature bullets */}
+                {!isPoster ? (
+                  <div className="space-y-1.5 pt-0.5 text-[11px] text-[#DCE4FF]">
+                    <div className="flex items-center gap-2">
+                      <svg className="h-3.5 w-3.5 text-[#00A3FF] shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      <span>Direct ticket sales & QR mobile check-in</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg className="h-3.5 w-3.5 text-[#00A3FF] shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      <span>Real-time audience reach & analytics</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-[11px] text-[#71cf88] font-medium pt-0.5">
+                    <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    <span>Verified Organizer Status Active</span>
+                  </div>
+                )}
+
+                <div className="pt-1">
+                  {isPoster ? (
+                    <Link
+                      href="/events/create"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#00A3FF] hover:bg-[#0092E6] py-2.5 px-3 text-xs font-bold text-white shadow-[0_6px_20px_rgba(0,163,255,0.35)] transition cursor-pointer"
+                    >
+                      <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                      <span>+ Post New Event</span>
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOrgBrandName(currentUser.fullName ? `${currentUser.fullName} Events` : "");
+                        setOrgPhone(currentUser.phone || "");
+                        setIsOrganizerModalOpen(true);
+                      }}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#00A3FF] hover:bg-[#0092E6] py-2.5 px-3 text-xs font-bold text-white shadow-[0_6px_20px_rgba(0,163,255,0.35)] transition cursor-pointer"
+                    >
+                      <span>Get Started as Organizer</span>
+                      <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                clearUserSession();
-              }}
-              className="text-xs font-bold text-[#FF5252] hover:underline cursor-pointer shrink-0 ml-2"
-            >
-              Log out
-            </button>
-          </div>
+          )}
 
           {/* Suggested Organizers & Venues (View events, NO follow buttons) */}
           <div className="p-4 rounded-2xl bg-[rgba(16,22,44,0.72)] backdrop-blur-xl border border-white/[0.16] shadow-xl space-y-4">
@@ -1264,70 +1493,96 @@ export default function InstagramFeed() {
               </button>
             </div>
 
-            {/* Search Box */}
-            <div className="flex items-center gap-2 bg-white/[0.06] px-3 py-2 rounded-xl border border-white/[0.10]">
-              <svg className="w-4 h-4 text-[#A7B0C9] fill-none stroke-current stroke-2" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search chats..."
-                value={chatSearch}
-                onChange={(e) => setChatSearch(e.target.value)}
-                className="w-full bg-transparent text-xs text-[#F4F7FF] placeholder-[#A7B0C9] focus:outline-none"
-              />
-            </div>
+            {currentUser ? (
+              <>
+                {/* Search Box */}
+                <div className="flex items-center gap-2 bg-white/[0.06] px-3 py-2 rounded-xl border border-white/[0.10]">
+                  <svg className="w-4 h-4 text-[#A7B0C9] fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Search chats..."
+                    value={chatSearch}
+                    onChange={(e) => setChatSearch(e.target.value)}
+                    className="w-full bg-transparent text-xs text-[#F4F7FF] placeholder-[#A7B0C9] focus:outline-none"
+                  />
+                </div>
 
-            {/* Send to all chats button */}
-            <button
-              type="button"
-              onClick={() => handleSendToAllChats(activeShareEvent)}
-              className="w-full py-2.5 px-3 rounded-xl bg-[#00A3FF]/15 border border-[#00A3FF]/30 hover:bg-[#00A3FF]/25 text-[#00A3FF] text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer"
-            >
-              <svg className="w-4 h-4 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
-                <line x1="22" y1="2" x2="11" y2="13" />
-                <polygon points="22 2 15 22 11 13 2 9 22 2" />
-              </svg>
-              <span>{sendingAll ? "Sent to all chats!" : `Send to all chats (${mockChatContacts.length})`}</span>
-            </button>
+                {/* Send to all chats button */}
+                <button
+                  type="button"
+                  onClick={() => handleSendToAllChats(activeShareEvent)}
+                  className="w-full py-2.5 px-3 rounded-xl bg-[#00A3FF]/15 border border-[#00A3FF]/30 hover:bg-[#00A3FF]/25 text-[#00A3FF] text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer"
+                >
+                  <svg className="w-4 h-4 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                    <line x1="22" y1="2" x2="11" y2="13" />
+                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                  </svg>
+                  <span>{sendingAll ? "Sent to all chats!" : `Send to all chats (${mockChatContacts.length})`}</span>
+                </button>
 
-            {/* Chats List */}
-            <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
-              {mockChatContacts
-                .filter((c) => c.name.toLowerCase().includes(chatSearch.toLowerCase()))
-                .map((contact) => {
-                  const isSent = sentChatIds[contact.id];
-                  return (
-                    <div
-                      key={contact.id}
-                      className="flex items-center justify-between p-2 rounded-xl bg-white/[0.05] border border-white/[0.08]"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full overflow-hidden bg-[#00A3FF] relative shrink-0">
-                          <Image src={contact.avatar} alt="" fill unoptimized className="object-cover" />
+                {/* Chats List */}
+                <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
+                  {mockChatContacts
+                    .filter((c) => c.name.toLowerCase().includes(chatSearch.toLowerCase()))
+                    .map((contact) => {
+                      const isSent = sentChatIds[contact.id];
+                      return (
+                        <div
+                          key={contact.id}
+                          className="flex items-center justify-between p-2 rounded-xl bg-white/[0.05] border border-white/[0.08]"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full overflow-hidden bg-[#00A3FF] relative shrink-0">
+                              <Image src={contact.avatar} alt="" fill unoptimized className="object-cover" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-[#F4F7FF]">{contact.name}</p>
+                              <p className="text-[10px] text-[#A7B0C9]">{contact.headline}</p>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleSendToChat(contact.id, activeShareEvent)}
+                            className={`text-xs font-bold px-3 py-1 rounded-lg transition cursor-pointer ${
+                              isSent
+                                ? "bg-white/[0.10] text-[#A7B0C9]"
+                                : "bg-[#00A3FF] hover:bg-[#0092E6] text-white"
+                            }`}
+                          >
+                            {isSent ? "✓ Sent" : "Send"}
+                          </button>
                         </div>
-                        <div>
-                          <p className="text-xs font-bold text-[#F4F7FF]">{contact.name}</p>
-                          <p className="text-[10px] text-[#A7B0C9]">{contact.headline}</p>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => handleSendToChat(contact.id, activeShareEvent)}
-                        className={`text-xs font-bold px-3 py-1 rounded-lg transition cursor-pointer ${
-                          isSent
-                            ? "bg-white/[0.10] text-[#A7B0C9]"
-                            : "bg-[#00A3FF] hover:bg-[#0092E6] text-white"
-                        }`}
-                      >
-                        {isSent ? "✓ Sent" : "Send"}
-                      </button>
-                    </div>
-                  );
-                })}
-            </div>
+                      );
+                    })}
+                </div>
+              </>
+            ) : (
+              /* Visitor view: Prompt to log in to chat with friends directly */
+              <div className="p-4 rounded-xl bg-white/[0.04] border border-white/[0.10] text-center space-y-2.5">
+                <div className="w-10 h-10 mx-auto rounded-full bg-[#00A3FF]/15 border border-[#00A3FF]/30 flex items-center justify-center text-[#00A3FF]">
+                  <svg className="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#F4F7FF]">Direct Messaging on Eventis</h4>
+                  <p className="text-[11px] text-[#A7B0C9] mt-0.5">
+                    Log in to send events directly to your Eventis friends and chat contacts.
+                  </p>
+                </div>
+                <Link
+                  href="/users/auth/login"
+                  onClick={() => setActiveShareEvent(null)}
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#00A3FF] hover:bg-[#0092E6] text-white text-xs font-bold transition shadow-md"
+                >
+                  Log In to Chat
+                </Link>
+              </div>
+            )}
 
             {/* Quick action circles */}
             <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/[0.10] text-center">
@@ -1363,7 +1618,7 @@ export default function InstagramFeed() {
               </button>
 
               <a
-                href={`https://wa.me/?text=${encodeURIComponent(`Check out this event: ${activeShareEvent.title} in Kigali: ${typeof window !== "undefined" ? window.location.origin : ""}/events/${activeShareEvent.id}`)}`}
+                href={`https://wa.me/?text=${encodeURIComponent(`Check out this event: ${activeShareEvent.title} in Rwanda: ${typeof window !== "undefined" ? window.location.origin : ""}/events/${activeShareEvent.id}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => {
@@ -1537,6 +1792,132 @@ export default function InstagramFeed() {
                 </button>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* BECOME AN ORGANIZER ONBOARDING MODAL */}
+      {isOrganizerModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200"
+          onClick={() => setIsOrganizerModalOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="organizer-modal-title"
+        >
+          <div
+            className="relative w-full max-w-lg rounded-3xl border border-white/[0.18] bg-[#0c1026]/95 p-6 sm:p-8 text-left shadow-[0_25px_60px_rgba(0,0,0,0.85)] backdrop-blur-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={() => setIsOrganizerModalOpen(false)}
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.08] text-[#A7B0C9] hover:bg-white/[0.15] hover:text-white transition cursor-pointer"
+              aria-label="Close modal"
+            >
+              ✕
+            </button>
+
+            {/* Header Lockup */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#00A3FF] to-[#0051FF] text-white shadow-[0_6px_20px_rgba(0,163,255,0.4)] shrink-0">
+                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#00A3FF]">Creator Onboarding</span>
+                <h2 id="organizer-modal-title" className="text-xl sm:text-2xl font-black text-[#F4F7FF] tracking-tight">
+                  Become an Organizer
+                </h2>
+              </div>
+            </div>
+
+            <p className="text-xs sm:text-sm text-[#A7B0C9] leading-relaxed mb-6">
+              Create your organizer profile to publish live concerts, festivals, nightlife events, and sell tickets directly to event-goers across Rwanda.
+            </p>
+
+            <form onSubmit={handleActivateOrganizer} className="space-y-4">
+              <div>
+                <label htmlFor="org-brand-input" className="block text-xs font-bold text-[#F4F7FF] mb-1.5">
+                  Organizer or Brand Name *
+                </label>
+                <input
+                  id="org-brand-input"
+                  type="text"
+                  required
+                  value={orgBrandName}
+                  onChange={(e) => setOrgBrandName(e.target.value)}
+                  placeholder="e.g. Rwanda Jazz Festival, Neon Nights, BK Arena"
+                  className="w-full rounded-xl border border-white/[0.14] bg-white/[0.06] px-3.5 py-2.5 text-sm text-[#F4F7FF] placeholder-[#A7B0C9]/60 outline-none transition focus:border-[#00A3FF] focus:bg-[#070814]/80"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="org-cat-select" className="block text-xs font-bold text-[#F4F7FF] mb-1.5">
+                  Primary Event Category
+                </label>
+                <select
+                  id="org-cat-select"
+                  value={orgCategory}
+                  onChange={(e) => setOrgCategory(e.target.value)}
+                  className="w-full rounded-xl border border-white/[0.14] bg-[#0c1026] px-3.5 py-2.5 text-sm text-[#F4F7FF] outline-none transition focus:border-[#00A3FF]"
+                >
+                  <option value="Concerts & Music">Live Music & Concerts</option>
+                  <option value="Festivals & Culture">Festivals & Cultural Fairs</option>
+                  <option value="Nightlife & Clubs">Nightlife, Lounges & Parties</option>
+                  <option value="Tech & Summits">Tech, Business & Conferences</option>
+                  <option value="Sports & Fitness">Sports & Fitness Meets</option>
+                  <option value="Arts & Fashion">Fashion & Contemporary Art</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="org-desc-input" className="block text-xs font-bold text-[#F4F7FF] mb-1.5">
+                  Bio / About Your Events (Optional)
+                </label>
+                <textarea
+                  id="org-desc-input"
+                  rows={2}
+                  value={orgDescription}
+                  onChange={(e) => setOrgDescription(e.target.value)}
+                  placeholder="Tell attendees across Rwanda what kind of experiences you organize..."
+                  className="w-full rounded-xl border border-white/[0.14] bg-white/[0.06] px-3.5 py-2 text-sm text-[#F4F7FF] placeholder-[#A7B0C9]/60 outline-none transition focus:border-[#00A3FF] focus:bg-[#070814]/80 resize-none"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="org-phone-input" className="block text-xs font-bold text-[#F4F7FF] mb-1.5">
+                  Contact Phone Number
+                </label>
+                <input
+                  id="org-phone-input"
+                  type="tel"
+                  value={orgPhone}
+                  onChange={(e) => setOrgPhone(e.target.value)}
+                  placeholder="e.g. 0788123456"
+                  className="w-full rounded-xl border border-white/[0.14] bg-white/[0.06] px-3.5 py-2.5 text-sm text-[#F4F7FF] placeholder-[#A7B0C9]/60 outline-none transition focus:border-[#00A3FF] focus:bg-[#070814]/80"
+                />
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-3 border-t border-white/[0.1]">
+                <button
+                  type="button"
+                  onClick={() => setIsOrganizerModalOpen(false)}
+                  className="rounded-xl border border-white/20 bg-white/[0.06] px-4 py-2.5 text-xs font-bold text-[#A7B0C9] hover:bg-white/[0.1] hover:text-white transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-xl bg-[#00A3FF] hover:bg-[#0092E6] px-5 py-2.5 text-xs font-bold text-white shadow-[0_6px_20px_rgba(0,163,255,0.4)] transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>Activate Profile & Post Event</span>
+                  <span>→</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

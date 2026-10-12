@@ -124,11 +124,31 @@ export default function CreateEventForm() {
           </Link>
           {!isPoster ? (
             <div className="mt-8 border-y border-[#d8d1cb] py-12">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#8a6b55]">Poster access</p>
-              <h1 className="mt-3 text-4xl font-black tracking-[-0.07em]">This page is for posters.</h1>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#8a6b55]">Organizer Access</p>
+              <h1 className="mt-3 text-4xl font-black tracking-[-0.07em]">Become an Event Organizer</h1>
               <p className="mt-4 max-w-xl text-sm leading-6 text-[#65605c]">
-                Your current preview role does not have permission to create event posts.
+                You are currently viewing Eventis as a regular attendee. Activate organizer permissions to publish concerts, parties, workshops, and nightlife events to Rwanda&apos;s feed.
               </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.setItem("eventis-role", "poster");
+                    window.dispatchEvent(new Event("eventis-role-change"));
+                    window.dispatchEvent(new Event("storage"));
+                    setIsPoster(true);
+                  }}
+                  className="rounded-full bg-[#00A3FF] hover:bg-[#0092E6] px-6 py-3 text-sm font-bold text-white shadow-md transition cursor-pointer"
+                >
+                  Activate Organizer Access Now
+                </button>
+                <Link
+                  href="/"
+                  className="rounded-full border border-[#d8d1cb] bg-white px-6 py-3 text-sm font-bold text-[#292929] hover:bg-neutral-50 transition"
+                >
+                  Return to Feed
+                </Link>
+              </div>
             </div>
           ) : (
             <>

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { saveUserSession, type EventisUser } from "../lib/auth";
 
@@ -7,8 +9,13 @@ function generateUserId(prefix: string) {
   return `${prefix}_${Date.now().toString(36)}`;
 }
 
-export default function AuthGate() {
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+interface AuthGateProps {
+  initialMode?: "login" | "register";
+}
+
+export default function AuthGate({ initialMode = "login" }: AuthGateProps) {
+  const router = useRouter();
+  const [authMode, setAuthMode] = useState<"login" | "register">(initialMode);
 
   // Login form state
   const [phone, setPhone] = useState("");
@@ -20,6 +27,23 @@ export default function AuthGate() {
   const [regStep, setRegStep] = useState<"details" | "otp">("details");
   const [otp, setOtp] = useState<string[]>(Array(4).fill(""));
   const [regError, setRegError] = useState("");
+
+  const handleSwitchToRegister = () => {
+    setAuthMode("register");
+    setRegStep("details");
+    setRegError("");
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", "/users/auth/register");
+    }
+  };
+
+  const handleSwitchToLogin = () => {
+    setAuthMode("login");
+    setLoginError("");
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", "/users/auth/login");
+    }
+  };
 
   // LOGIN ACTIONS
   const handleLoginSubmit = (e: React.FormEvent) => {
@@ -45,17 +69,18 @@ export default function AuthGate() {
     const cleanUsername = digits.slice(-4);
     const user: EventisUser = {
       id: generateUserId("usr"),
-      username: cleanUsername ? `explorer_${cleanUsername}` : "kigali_explorer",
+      username: cleanUsername ? `explorer_${cleanUsername}` : "rwanda_explorer",
       fullName: "Eric Mugisha",
       phone: digits,
       email: "member@eventis.rw",
       avatarUrl: "/eve1.jpg",
       isPhoneVerified: true,
       isBusinessAccount: false,
-      bio: "Discovering live concerts and culture in Kigali 🇷🇼",
+      bio: "Discovering live concerts and culture across Rwanda 🇷🇼",
     };
 
     saveUserSession(user);
+    router.push("/");
   };
 
   // REGISTER ACTIONS
@@ -106,6 +131,7 @@ export default function AuthGate() {
     };
 
     saveUserSession(user);
+    router.push("/");
   };
 
   const handleVerifyOtp = () => {
@@ -502,6 +528,24 @@ export default function AuthGate() {
         }
       `}</style>
 
+      {/* Home Navigation Button */}
+      <Link
+        href="/"
+        className="absolute top-5 right-5 z-50 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.14] backdrop-blur-md text-xs font-semibold text-[#A7B0C9] hover:text-white transition shadow-lg cursor-pointer"
+        aria-label="Go to home"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          className="w-3.5 h-3.5 text-[#00A3FF]"
+          aria-hidden="true"
+        >
+          <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+        </svg>
+        <span>Home</span>
+      </Link>
+
       {/* Left Artwork Section with Seamless Falcon Video Loop */}
       <section className="gate-photo">
         <video
@@ -598,11 +642,7 @@ export default function AuthGate() {
                 <button
                   type="button"
                   className="gate-footer-btn"
-                  onClick={() => {
-                    setAuthMode("register");
-                    setRegStep("details");
-                    setRegError("");
-                  }}
+                  onClick={handleSwitchToRegister}
                 >
                   Register
                 </button>
@@ -733,10 +773,7 @@ export default function AuthGate() {
                 <button
                   type="button"
                   className="gate-footer-btn"
-                  onClick={() => {
-                    setAuthMode("login");
-                    setLoginError("");
-                  }}
+                  onClick={handleSwitchToLogin}
                 >
                   Log in
                 </button>

@@ -11,7 +11,11 @@ import {
   type EventisUser,
 } from "../lib/auth";
 
-const navLinks = [
+const visitorNavLinks = [
+  { label: "Home", href: "/" },
+];
+
+const memberNavLinks = [
   { label: "Home", href: "/" },
   { label: "Inbox", href: "/inbox" },
   { label: "Saved", href: "/saved" },
@@ -154,7 +158,9 @@ export default function Navbar() {
     return pathname === href || pathname.startsWith(`${href}/`);
   }
 
-  const links = [...navLinks, ...(isPoster ? [{ label: "Event Post", href: "/events/create" }] : [])];
+  const links = currentUser
+    ? [...memberNavLinks, ...(isPoster ? [{ label: "Event Post", href: "/events/create" }] : [])]
+    : visitorNavLinks;
 
   return (
     <header className={`eventis-navbar sticky top-0 z-50 w-full bg-transparent transition-all duration-200 ${isScrolled ? "is-scrolled" : ""}`}>
@@ -192,7 +198,7 @@ export default function Navbar() {
           </form>
         </div>
 
-        <nav aria-label="Main navigation" className="hidden items-center justify-center xl:flex">
+        <nav aria-label="Main navigation" className="hidden items-center justify-center md:flex">
           <div className="flex items-center gap-0.5">
             {links.map((link) => (
               <Link
@@ -341,31 +347,22 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            /* Logged out: Login and Sign Up buttons */
-            <>
-              <div className="hidden items-center gap-1.5 xl:flex">
-                <Link
-                  href="/users/auth/login"
-                  className="eventis-auth-login"
-                >
-                  Login
-                </Link>
-
-                <Link
-                  href="/users/auth/register"
-                  className="eventis-auth-primary inline-flex"
-                >
-                  Sign Up
-                </Link>
-              </div>
+            /* Visitor / Logged out: Login and Sign Up buttons */
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Link
+                href="/users/auth/login"
+                className="eventis-auth-login"
+              >
+                Login
+              </Link>
 
               <Link
                 href="/users/auth/register"
-                className="eventis-auth-primary inline-flex xl:hidden"
+                className="eventis-auth-primary"
               >
                 Sign Up
               </Link>
-            </>
+            </div>
           )}
 
           <button
@@ -374,7 +371,7 @@ export default function Navbar() {
             aria-expanded={isMenuOpen}
             aria-controls="eventis-mobile-navigation"
             aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-            className="eventis-menu-button inline-flex h-10 w-10 shrink-0 items-center justify-center xl:hidden"
+            className="eventis-menu-button inline-flex h-10 w-10 shrink-0 items-center justify-center md:hidden"
           >
             {isMenuOpen ? (
               <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round">
@@ -391,7 +388,7 @@ export default function Navbar() {
 
       {/* Mobile Drawer */}
       {isMenuOpen && (
-        <nav id="eventis-mobile-navigation" aria-label="Mobile navigation" className="eventis-mobile-panel xl:hidden">
+        <nav id="eventis-mobile-navigation" aria-label="Mobile navigation" className="eventis-mobile-panel md:hidden">
           <div className="flex flex-col">
             {/* Mobile Get App Button */}
             <button
@@ -460,10 +457,10 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="flex items-center gap-3 pt-3 border-t border-white/[0.08]">
-                <Link href="/users/auth/login" onClick={() => setIsMenuOpen(false)} className="eventis-auth-login">
+                <Link href="/users/auth/login" onClick={() => setIsMenuOpen(false)} className="eventis-auth-login flex-1 justify-center">
                   Login
                 </Link>
-                <Link href="/users/auth/register" onClick={() => setIsMenuOpen(false)} className="eventis-auth-primary">
+                <Link href="/users/auth/register" onClick={() => setIsMenuOpen(false)} className="eventis-auth-primary flex-1 justify-center">
                   Sign Up
                 </Link>
               </div>
@@ -510,7 +507,7 @@ export default function Navbar() {
               Get the EVENTIS App
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-[#A7B0C9] leading-relaxed">
-              Explore live events, get instant concert notifications, and book tickets anywhere in Kigali.
+              Explore live events, get instant concert notifications, and book tickets anywhere in Rwanda.
             </p>
 
             {/* QR Code */}

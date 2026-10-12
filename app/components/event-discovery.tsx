@@ -485,7 +485,7 @@ export default function EventDiscovery({ showEventGrid = true }: { showEventGrid
                       <span className="event-card-price">{event.priceType === "free" ? "Free" : event.price || "Paid"}</span>
                       <div className="event-card-actions">
                         <button type="button" onClick={() => void shareEvent(event)}><ActionIcon name="share" /><span>Share</span></button>
-                        <button type="button" onClick={() => setSelectedInsight(event)}><ActionIcon name="insights" /><span>Insights</span></button>
+                        <button type="button" onClick={() => setSelectedInsight(event)}><ActionIcon name="insights" /><span>Insights ({(event.viewsCount || 120).toLocaleString()})</span></button>
                       </div>
                     </div>
                   </div>

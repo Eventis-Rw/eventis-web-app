@@ -14,7 +14,7 @@ export const AUTH_USER_KEY = "eventis-user";
 export const AUTH_CHANGE_EVENT = "eventis-auth-change";
 
 export const DEFAULT_DEMO_USER: EventisUser = {
-  id: "usr_kigali_1",
+  id: "usr_rwanda_1",
   username: "eventis_explorer",
   fullName: "Eric Mugisha",
   phone: "+250 788 123 456",
@@ -22,7 +22,7 @@ export const DEFAULT_DEMO_USER: EventisUser = {
   avatarUrl: "/eve1.jpg",
   isPhoneVerified: true,
   isBusinessAccount: false,
-  bio: "Discovering culture, music and tech in Kigali 🇷🇼",
+  bio: "Discovering culture, music and tech across Rwanda 🇷🇼",
 };
 
 export function getStoredUser(): EventisUser | null {

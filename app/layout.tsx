@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EVENTIS | Find Your Next Event",
+  title: "eventis | meet a home events",
   description: "Discover events and memorable experiences across Rwanda with EVENTIS.",
   icons: { icon: "/eventis-logo.svg" },
 };
